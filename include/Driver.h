@@ -17,7 +17,7 @@ class Driver
 private:
     VideoCapture capture;
     int camID_0 = 0, camID_1 = 1;
-
+    int frameWidth, frameHeight;
 public:
     bool InitCam() ;
     bool StartGrab() ;
