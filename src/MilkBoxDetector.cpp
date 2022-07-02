@@ -3,3 +3,14 @@
 //
 #include "MilkBoxDetector.h"
 
+MilkBoxDetector::MilkBoxDetector() {}
+
+void MilkBoxDetector::DetectMilkBox(Mat &src) {
+    Prepocess(src);
+}
+
+void MilkBoxDetector::Prepocess(Mat &src) {
+    Mat dst;
+    cv::cvtColor(src,gray,COLOR_BGR2GRAY);
+}
+

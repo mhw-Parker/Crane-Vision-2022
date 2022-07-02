@@ -9,17 +9,19 @@ bool Driver::InitCam()
 }
 bool Driver::StartGrab()
 {
-    capture.open(camID_0,cv::CAP_ANY);
+    capture.open(camID_1,cv::CAP_ANY);
     if (!capture.isOpened()) {
-        cerr << "ERROR! Unable to open camera\n";
+        std::cerr << "ERROR! Unable to open camera\n";
         return -1;
     } else
         return true;
 }
 bool Driver::SetCam()
 {
-    //    capture.set(CAP_PROP_FRAME_WIDTH, 1024);			//设置相机采样宽度
-    //    capture.set(CAP_PROP_FRAME_HEIGHT, 820);		//设置相机采样高度
+    //capture.set(CAP_PROP_FRAME_WIDTH, 640);			//设置相机采样宽度
+    //capture.set(CAP_PROP_FRAME_HEIGHT, 480);		//设置相机采样高度
+    //capture.set(CAP_PROP_AUTO_EXPOSURE,0.25);
+    //capture.set(CAP_PROP_EXPOSURE,-13);
     return true;
 }
 bool Driver::Grab(Mat& src)
@@ -31,5 +33,5 @@ bool Driver::Grab(Mat& src)
 
 bool Driver::StopGrab()
 {
-
+    return true;
 }

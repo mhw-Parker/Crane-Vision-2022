@@ -15,8 +15,9 @@ MESSAGE(STATUS "OpenCV Version: ${OpenCV_VERSION}")
 message(STATUS "OpenCV PATH: ${OpenCV_LIBS_DIR}")
 MESSAGE(STATUS "OpenCV Libraries: ${OpenCV_LIBS}")
 
-FILE(GLOB_RECURSE FILE_SRC "/src/*.cpp")
+FILE(GLOB_RECURSE FILE_SRC "${PROJECT_SOURCE_DIR}/src/Driver.cpp"
+        "${PROJECT_SOURCE_DIR}/src/MilkBoxDetector.cpp")
 
-add_executable(${BIN_NAME} ${FILE_SRC} main.cpp)
+add_executable(${BIN_NAME} main.cpp ${FILE_SRC})
 
 target_link_libraries(${BIN_NAME} ${OpenCV_LIBS})

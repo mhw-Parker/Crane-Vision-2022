@@ -16,9 +16,12 @@ using namespace cv;
 class MilkBoxDetector {
 public:
     MilkBoxDetector();
-    ~MilkBoxDetector(){} = default;
-private:
+    ~MilkBoxDetector() = default;
+    void DetectMilkBox(Mat &src);
 
+private:
+    void Prepocess(Mat &src);
+    Mat gray;
 };
 
 #endif //CRANE2022_MILKBOXDETECTOR_H
