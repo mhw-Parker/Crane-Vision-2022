@@ -5,15 +5,27 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/opencv.hpp>
 #include <string>
+#include "Driver.h"
 
 using namespace std;
 using namespace cv;
 
 int main(int argc, char** argv)
 {
-    string file_name = "C:\\Users\\14107\\Pictures\\Pictures\\表情包\\1.png";
-    Mat src = cv::imread(file_name);
-    imshow("src",src);
-    waitKey(0);
+    Driver driver;
+    Mat frame;
+    if(driver.InitCam() && driver.SetCam() && driver.StartGrab())
+        printf("camera set successfully ! \n");
+    else
+        return 0;
+    while(1){
+        driver.Grab(frame);
+        if (frame.empty()) {
+            cerr << "ERROR! blank frame grabbed\n";
+            break;
+        }
+        imshow("capture",frame);
+        waitKey(1);
+    }
 }
 
