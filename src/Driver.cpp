@@ -18,16 +18,12 @@ bool Driver::StartGrab()
         capture.read(src);
         frameWidth = src.cols;
         frameHeight = src.rows;
-        printf("image width: %d\t image height: %d\n",frameWidth,frameHeight);
-    }
+        printf("camera image size : %d x %d\n",frameWidth,frameHeight);
         return true;
+    }
 }
 bool Driver::SetCam()
 {
-    //capture.set(CAP_PROP_FRAME_WIDTH, 1280);			//设置相机采样宽度
-    //capture.set(CAP_PROP_FRAME_HEIGHT, 720);		//设置相机采样高度
-    //capture.set(CAP_PROP_AUTO_EXPOSURE,0.25);
-    //capture.set(CAP_PROP_EXPOSURE,-13);
     return true;
 }
 bool Driver::Grab(Mat& src)
@@ -36,8 +32,14 @@ bool Driver::Grab(Mat& src)
     if(src.empty()) printf("grab failed !");
     return !src.empty();
 }
-
-bool Driver::StopGrab()
-{
-    return true;
+bool Driver::Grab(Mat &src, std::string photo_path) {
+    capture.open(photo_path);
+    if (!capture.isOpened()) {
+        std::cerr << "ERROR! Unable to open photo, maybe wrong path\n";
+        exit(0);
+    } else {
+        capture.read(src);
+        return true;
+    }
 }
+

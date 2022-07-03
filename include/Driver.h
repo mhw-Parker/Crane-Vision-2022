@@ -22,7 +22,8 @@ public:
     bool InitCam() ;
     bool StartGrab() ;
     bool SetCam() ;
-    bool Grab(Mat& src) ;
-    bool StopGrab() ;
+    bool Grab(Mat &src) ;
+    bool Grab(Mat &src, std::string photo_path);
+
 };
 #endif //CRANE2022_DRIVER_H

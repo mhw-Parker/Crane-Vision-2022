@@ -9,12 +9,12 @@
 #include "Driver.h"
 #include "MilkBoxDetector.h"
 
-#ifndef SAVE_PHOTO
-#define SAVE_PHOTO 1
-#endif
-
 using namespace std;
 using namespace cv;
+
+string savePath = "../photos/";
+
+bool debug = true;
 
 string FileLocation(string Location, int num, string EndLocationType)
 {
@@ -30,15 +30,18 @@ int main(int argc, char** argv)
 {
     Driver driver;
     MilkBoxDetector detector;
-    string savePath = "../photos/";
-    int start_num = 0;
+    int start_num = 0; //the start number of the first photo
     Mat frame;
-    if(driver.InitCam() && driver.SetCam() && driver.StartGrab())
+    if(driver.StartGrab())
         printf("camera set successfully ! \n");
     else
         return 0;
     while(1){
-        driver.Grab(frame);
+        if(debug) {
+            string src_path = FileLocation(savePath,++start_num,".jpg");
+            driver.Grab(frame,src_path);
+        } else
+            driver.Grab(frame);
         if (frame.empty()) {
             std::cerr << "ERROR! blank frame grabbed\n";
             break;
@@ -47,11 +50,15 @@ int main(int argc, char** argv)
         if(waitKey(15) == 32) {
             string path = FileLocation(savePath,start_num++,".jpg");
             imwrite(path,frame);
+            printf("take a shot !\n");
         }
 #endif
         detector.DetectMilkBox(frame);
-        imshow("capture",frame);
-        waitKey(1);
+        imshow("result", frame);
+        if(debug)
+            waitKey(0);
+        else
+            waitKey(1);
     }
 }
 
