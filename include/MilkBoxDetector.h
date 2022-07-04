@@ -22,7 +22,7 @@ public:
     void DetectMilkBox(Mat &src);
 
     /** --   |  =  -|  ||  |-  none  **/
-    /**  1   2  3   4   5  6    0    **/
+    /**  1   2  3   4   6  5    0    **/
     int pose;
     Mat tempImg;
 
@@ -48,6 +48,8 @@ private:
     float min_box_area;
     float max_dx;
     float max_angle_error;
+    float max_text_box_area;
+    float min_color_box_area;
     float temHeight = 100;
 
 };

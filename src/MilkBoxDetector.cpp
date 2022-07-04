@@ -3,25 +3,17 @@
 //
 #include "MilkBoxDetector.h"
 
-cv::Mat src_mat, dst_mat, gray_;
-int bin_thresh = 100, bin_maxval = 255;
-
-void ThresholdMat(int, void *) {
-    Mat dst;
-    threshold(gray_, dst, bin_thresh, bin_maxval, THRESH_BINARY);
-    imshow("threshold", dst);
-    waitKey(1);
-}
 
 MilkBoxDetector::MilkBoxDetector() {
-    max_ratio = 2;
-    min_ratio = 0.5;
-    min_box_area = 2000;
-    max_dx = 70;
+    max_ratio = 2;          // the rect max ratio
+    min_ratio = 0.5;        // the rect min ratio
+    min_box_area = 2000;    // the min area of the box
+    max_dx = 50;            // the center of the blob max delta x pixel
+    max_text_box_area = 10000;  //
+    min_color_box_area = 16000;
 
-    max_angle_error = 10;
-    max_model_num = 3;
-
+    max_angle_error = 10; // the max error angle of the deep color blob
+    max_model_num = 3;      // the list of the model match
 }
 
 void MilkBoxDetector::DetectMilkBox(Mat &src) {
@@ -31,7 +23,7 @@ void MilkBoxDetector::DetectMilkBox(Mat &src) {
     if(text_box.size()) {
         double s = getTickCount();
         TemplateMatch(src);
-        cout << "match time : " << (getTickCount() - s) * 1000 / getTickFrequency() << endl;
+        //cout << "match time : " << (getTickCount() - s) * 1000 / getTickFrequency() << endl;
     }
     JudgePose();
     for(auto &i : text_box) {
@@ -65,7 +57,7 @@ void MilkBoxDetector::Preprocess(Mat &src) {
     morphologyEx(binary_inv,binary_inv,MORPH_OPEN,element);
     imshow("gray",gray);
     //imshow("binary",binary);
-    //imshow("binary inv",binary_inv);
+    imshow("binary inv",binary_inv);
 }
 
 void MilkBoxDetector::GetPossibleBox(){
@@ -82,7 +74,7 @@ void MilkBoxDetector::GetPossibleBox(){
         if(abs(box.center.x - 640/2) > max_dx) continue; // only detect the milk box which locates in the middle
         //if(box.center.y < 150) continue;
 
-        float ratio = box.size.width / box.size.height;
+        float ratio = (box.size.width > box.size.height) ? box.size.width / box.size.height : box.size.height / box.size.width;
         if(ratio > max_ratio || ratio < min_ratio) continue; // a condition about the roi w/h ratio
 
         float box_area = box.size.width * box.size.height;
@@ -91,15 +83,15 @@ void MilkBoxDetector::GetPossibleBox(){
         float angle = fabs(box.angle);
         if(angle - 90.0 > max_angle_error && angle > max_angle_error) continue;
 
-        if(box_area < 10000) { // the text box
+        if(box_area < max_text_box_area) { // the text box
             //printf("ratio : %f\t", ratio);
             if(box.center.y < 50) continue;
             text_box.push_back(box);
         }
         else {
             if(box.center.y < 150) continue;
-            if(box_area < 20000) continue;
-            cout << "area : " << box_area << endl;
+            if(box_area < min_color_box_area) continue;
+            //  cout << "area : " << box_area << endl;
             color_box.push_back(box); // store the possible which possibly include the text;
         }
 
@@ -133,14 +125,14 @@ void MilkBoxDetector::JudgePose() {
             if(area < 60000)
                 pose = 4;
             else
-                pose = 5;
+                pose = 6;
             //printf("%f\t%f\t%f\n",area,ratio,angle);
         }
     }
     else if(s.x == 2)
         pose = 3;
     else if(s.x == 1 && s.y == 1)
-        pose = 6;
+        pose = 5;
 
 }
 
