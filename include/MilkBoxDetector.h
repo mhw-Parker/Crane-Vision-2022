@@ -47,6 +47,7 @@ private:
     float max_ratio, min_ratio;
     float min_box_area;
     float max_dx;
+    float max_angle_error;
     float temHeight = 100;
 
 };

@@ -19,12 +19,9 @@ MilkBoxDetector::MilkBoxDetector() {
     min_box_area = 2000;
     max_dx = 70;
 
+    max_angle_error = 10;
     max_model_num = 3;
 
-    dstPoint[1] = Point2f(0,0);
-    dstPoint[2] = Point2f(1.37*temHeight,0);
-    dstPoint[3] = Point2f(1.37*temHeight,temHeight);
-    dstPoint[0] = Point2f (0,temHeight);
 }
 
 void MilkBoxDetector::DetectMilkBox(Mat &src) {
@@ -91,6 +88,9 @@ void MilkBoxDetector::GetPossibleBox(){
         float box_area = box.size.width * box.size.height;
         if(box_area < min_box_area) continue; // a condition about roi area;
 
+        float angle = fabs(box.angle);
+        if(angle - 90.0 > max_angle_error && angle > max_angle_error) continue;
+
         if(box_area < 10000) { // the text box
             //printf("ratio : %f\t", ratio);
             if(box.center.y < 50) continue;
@@ -98,6 +98,8 @@ void MilkBoxDetector::GetPossibleBox(){
         }
         else {
             if(box.center.y < 150) continue;
+            if(box_area < 20000) continue;
+            cout << "area : " << box_area << endl;
             color_box.push_back(box); // store the possible which possibly include the text;
         }
 

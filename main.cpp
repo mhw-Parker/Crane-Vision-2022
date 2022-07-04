@@ -55,7 +55,7 @@ int main(int argc, char** argv)
 #endif
         double s = getTickCount();
         detector.DetectMilkBox(frame);
-        cout << "latency : " << (getTickCount() - s) * 1000 / getTickFrequency() << endl;
+        //cout << "latency : " << (getTickCount() - s) * 1000 / getTickFrequency() << endl;
 #if SAVE_TEMPLATE == 1
         if(!detector.tempImg.empty()) {
             string path = FileLocation("../TemplateModel/",++start_num,".jpg");

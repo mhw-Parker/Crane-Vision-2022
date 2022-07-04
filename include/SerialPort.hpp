@@ -20,8 +20,8 @@
 
 /*--------------------------------暂定协议-------------------------------------*/
 
-//暂定25字节,头1字节,数据18字节,尾1字节
-#define    VISION_LENGTH        25
+//暂定25字节,头 1 字节,数据 2 字节,尾 1 字节
+#define    VISION_LENGTH        4
 //起始字节,协议固定为0xA5
 #define    VISION_SOF         (0xA5)
 //end字节,协议固定为0xA5
@@ -29,9 +29,9 @@
 
 /**---------------------------------------SEND DATA PROTOCOL--------------------------------------------**/
 /**    ----------------------------------------------------------------------------------------------------
-FIELD  |  A5  |  CmdID  |  yaw  |  pitch  | distance  |  shoot  |  find  |  timestamp |  A6  |
+FIELD  |  A5  |  POSE  |  identify  |  A6  |
        ----------------------------------------------------------------------------------------------------
-BYTE   |   1  |    1    |   4   |    4    |     4     |    1    |    1   |     8     |   1  |
+BYTE   |  1  |    1    |      1     |  1   |
        ----------------------------------------------------------------------------------------------------
 **/
 /**---------------------------------------SEND DATA PROTOCOL--------------------------------------------**/
@@ -39,9 +39,9 @@ BYTE   |   1  |    1    |   4   |    4    |     4     |    1    |    1   |     8
 
 /**---------------------------------------RECEIVE DATA PROTOCOL-----------------------------------------------------------------------------**/
 /**    -----------------------------------------------------------------------------------------------------------------------------------------
-FIELD  |  head  |  CmdID  |  yawAngle  |  pitchAngle  | yawSpeed  |  pitchSpeed  |  targetMode  |  targetColor | blank |  blank |  blank |   A6  |
+FIELD  |  A5  |  identify  |  A6  |
        ----------------------------------------------------------------------------------------------------
-BYTE   |   1    |    1    |     4      |      4      |     4     |      4       |       4       |      8     |   1   |    1   |   1    |   1   |
+BYTE   |  1   |     1      |  1   |
 ------------------------------------------------------------------------------------------------------------------------------------------------
 **/
 /**---------------------------------------RECEIVE DATA PROTOCOL------------------------------------------------------------------------------**/
@@ -63,22 +63,7 @@ using namespace std;
  */
 struct ReceiveData
 {
-    uint8_t head = 0;
-    uint8_t CmdID = 0;
-
-    float yawAngle = 0;
-    float pitchAngle = 0;
-    float yawSpeed = 0;
-    float pitchSpeed = 0;
-    uint8_t targetMode = 0;
-
-    uint8_t targetColor = 0;// 0 red target, 1 blue target
-    uint8_t direction = 0;
-    uint8_t blankC = 0;
-    uint8_t blankD = 0;
-    uint8_t blankE = 0;
-
-    uint8_t end;
+    uint8_t flag = 0;
 };
 
 /**
@@ -104,7 +89,7 @@ private:
 public:
     explicit Serial(int nSpeed = 115200, char nEvent = 'N', int nBits = 8, int nStop = 1);
     ~Serial();
-    void pack(float yaw, float pitch, float dist, uint8_t shoot, uint8_t find, uint8_t CmdID, long long timeStamp);
+    void pack(uint8_t pose, uint8_t identify);
     bool InitPort(int nSpeed = 115200, char  nEvent = 'N', int nBits = 8, int nStop = 1);
     bool WriteData();
     bool ReadData(struct ReceiveData& buffer);

@@ -25,16 +25,15 @@ string get_uart_dev_name() {
 Serial::Serial(int nSpeed, char nEvent, int nBits, int nStop) :
         nSpeed(nSpeed), nEvent(nEvent), nBits(nBits), nStop(nStop) {
     if (wait_uart) {
-        //LOGA("Wait for serial be ready!");
         //cout<<("Wait for serial be ready!")<<endl;
         InitPort(nSpeed, nEvent, nBits, nStop);
-        //LOGA("Port set successfully!");
+
         //cout<<("Port set successfully!")<<endl;
     } else {
         if (InitPort(nSpeed, nEvent, nBits, nStop)) {
-            //LOGA("Port set successfully!");
+
         } else {
-            //LOGE("Port set fail!");
+
             //cout<<("Port set fail!")<<endl;
         }
     }
@@ -63,7 +62,6 @@ bool Serial::InitPort(int nSpeed_, char nEvent_, int nBits_, int nStop_) {
         return false;
     }
     if ((fd = open(name.data(), O_RDWR|O_APPEND|O_SYNC)) < 0) {
-        //LOGE("fd failed!");
         //cout<<"fd failed!"<<endl;
         return false;
     }
@@ -74,26 +72,15 @@ bool Serial::InitPort(int nSpeed_, char nEvent_, int nBits_, int nStop_) {
  * @brief package the data needed by lower computer
  * @param yaw yaw angle
  * @param pitch pitch angle
- * @param dist distance of target armor
- * @param shoot shoot or not
- * @param find found target armor or not
- * @param CmdID command id
- * @param timeStamp time stamp
- * @details CmdID and timeStamo not really used in current code
  * @return none
  */
-void Serial::pack(float yaw, float pitch, float dist, uint8_t shoot, uint8_t find, uint8_t CmdID, long long timeStamp)
+void Serial::pack(uint8_t pose, uint8_t identify)
 {
     unsigned char *p;
     buff[0] = VISION_SOF;
-    memcpy(buff + 1, &CmdID, 1);
-    memcpy(buff + 2, &yaw, 4);
-    memcpy(buff + 6, &pitch, 4);
-    memcpy(buff + 10, &dist, 4);
-    memcpy(buff + 14, &shoot, 4);
-    memcpy(buff + 15, &find, 4);
-    memcpy(buff + 16, &timeStamp, 8);
-    buff[24] = static_cast<char>(VISION_TOF);
+    memcpy(buff + 1, &pose, 1);
+    memcpy(buff + 2, &identify, 1);
+    buff[3] = static_cast<char>(VISION_TOF);
 }
 
 /**
@@ -142,7 +129,7 @@ bool Serial::ReadData(struct ReceiveData &buffer_) {
     while(maxReadTime--)
     {
         read(fd, &buffRead[0], 1);
-        if(buffRead[0] == 0xA5) break;
+        if(buffRead[0] == VISION_SOF) break;
     }
 
     if(maxReadTime == 0)return false;
@@ -150,37 +137,26 @@ bool Serial::ReadData(struct ReceiveData &buffer_) {
     readCount = 1;
     while (readCount < VISION_LENGTH - 1)
     {
-        try
-        {
+        try{
             onceReadCount = read(fd, (buffRead + readCount), VISION_LENGTH - readCount);
         }
-        catch(exception e)
-        {
-            //LOGE("Data Read Error!");
+        catch(exception e){
             //cout << e.what() << endl;
             return false;
         }
 
-        if (onceReadCount < 1)
-        {
+        if (onceReadCount < 1) {
             return false;
         }
         readCount += onceReadCount;
     }
 
-    if (buffRead[0] != VISION_SOF || buffRead[VISION_LENGTH - 1] != VISION_TOF)
-    {
+    if (buffRead[0] != VISION_SOF || buffRead[VISION_LENGTH - 1] != VISION_TOF){
         return false;
     }
     else
     {
-        memcpy(&buffer_.yawAngle,buffRead + 2,4);
-        memcpy(&buffer_.pitchAngle,buffRead + 6,4);
-        memcpy(&buffer_.yawSpeed,buffRead + 10,4);
-        memcpy(&buffer_.pitchSpeed,buffRead + 14,4);
-        memcpy(&buffer_.targetMode,buffRead + 18,1);
-        memcpy(&buffer_.targetColor,buffRead + 19,1);
-        memcpy(&buffer_.direction,buffRead + 20,1);
+        memcpy(&buffer_.flag,buffRead + 1,1);
         return true;
     }
 
