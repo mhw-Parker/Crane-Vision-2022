@@ -53,7 +53,15 @@ int main(int argc, char** argv)
             printf("take a shot !\n");
         }
 #endif
+        double s = getTickCount();
         detector.DetectMilkBox(frame);
+        cout << "latency : " << (getTickCount() - s) * 1000 / getTickFrequency() << endl;
+#if SAVE_TEMPLATE == 1
+        if(!detector.tempImg.empty()) {
+            string path = FileLocation("../TemplateModel/",++start_num,".jpg");
+            imwrite(path,detector.tempImg);
+        }
+#endif
         imshow("result", frame);
         if(debug)
             waitKey(0);

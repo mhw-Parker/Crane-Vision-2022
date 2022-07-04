@@ -13,6 +13,10 @@
 #define DEBUG 1
 #endif
 
+#ifndef SAVE_TEMPLATE
+#define SAVE_TEMPLATE 0
+#endif
+
 #ifdef FRAME_WIDTH
 #define FRAME_WIDTH 640
 #endif

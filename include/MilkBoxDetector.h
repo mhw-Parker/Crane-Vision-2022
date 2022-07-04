@@ -24,6 +24,7 @@ public:
     /** --   |  =  -|  ||  |-  none  **/
     /**  1   2  3   4   5  6    0    **/
     int pose;
+    Mat tempImg;
 
 private:
     void Preprocess(Mat &src);
@@ -38,13 +39,14 @@ private:
     vector<RotatedRect> text_box;
 
     Point2f srcPoint[4], dstPoint[4];
+    int model_cnt = 1, max_model_num;
 
 private:
     void SetWarpPoint();
 
     float max_ratio, min_ratio;
-    float max_box_area, min_box_area;
-    float max_angle, min_angle;
+    float min_box_area;
+    float max_dx;
     float temHeight = 100;
 
 };
