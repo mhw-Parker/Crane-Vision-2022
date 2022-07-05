@@ -6,7 +6,7 @@
 #define CRANE2022_SELFDEFINE_H
 
 #ifndef SAVE_PHOTO
-#define SAVE_PHOTO 0
+#define SAVE_PHOTO 1
 #endif
 
 #ifndef DEBUG
@@ -17,11 +17,11 @@
 #define SAVE_TEMPLATE 0
 #endif
 
-#ifdef FRAME_WIDTH
+#ifndef FRAME_WIDTH
 #define FRAME_WIDTH 640
 #endif
 
-#ifdef FRAME_HEIGHT
+#ifndef FRAME_HEIGHT
 #define FRAME_HEIGHT 480
 #endif
 

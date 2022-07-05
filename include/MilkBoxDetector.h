@@ -15,6 +15,38 @@
 using namespace std;
 using namespace cv;
 
+
+/**
+ * @brief the parameters about the contours
+ * */
+static struct param {
+    float max_ratio, min_ratio;
+    float max_area, min_area;
+    int max_x, max_y, min_x, min_y;
+}param;
+
+/**
+ * @brief create a new class to store redefine the height and width of the color blobs
+ * */
+class roiBox {
+public:
+    roiBox(RotatedRect rect, float S) : rect(rect), area(S){
+        if(fabs(rect.angle) < 10) {
+            h = rect.size.height;
+            w = rect.size.width;
+        } else {
+            h = rect.size.width;
+            w = rect.size.height;
+        }
+        h2w = h / w;
+        rect.points(pts_4);
+    }
+    RotatedRect rect;
+    Point2f pts_4[4];
+    float area, h2w;
+    float h, w;
+};
+
 class MilkBoxDetector {
 public:
     MilkBoxDetector();
@@ -36,7 +68,9 @@ private:
     Mat source_image, gray;
 
     vector<RotatedRect> color_box;
-    vector<RotatedRect> text_box;
+    vector<RotatedRect> forward_text_box;
+    vector<roiBox> roi_text;
+    vector<roiBox> roi_big_blob;
 
     Point2f srcPoint[4], dstPoint[4];
     int model_cnt = 1, max_model_num;
@@ -44,20 +78,15 @@ private:
 private:
     void SetWarpPoint();
 
-    float max_ratio, min_ratio;
-    float min_box_area;
     float max_dx;
     float max_angle_error;
-    float max_text_box_area;
-    float min_color_box_area;
     float temHeight = 100;
 
+    struct param textBox;
+    struct param colorBox;
 };
-class roiBox {
-public:
-    roiBox(RotatedRect rect, float r, float S) : rect(rect), ratio(r), area(S){}
-    RotatedRect rect;
-    float ratio, area;
-};
+
+
+
 
 #endif //CRANE2022_MILKBOXDETECTOR_H

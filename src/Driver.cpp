@@ -12,7 +12,7 @@ bool Driver::StartGrab()
     capture.open(camID_1,cv::CAP_ANY);
     if (!capture.isOpened()) {
         std::cerr << "ERROR! Unable to open camera\n";
-        return -1;
+        return 0;
     } else {
         Mat src;
         capture.read(src);

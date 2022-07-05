@@ -5,39 +5,45 @@
 
 
 MilkBoxDetector::MilkBoxDetector() {
-    max_ratio = 2;          // the rect max ratio
-    min_ratio = 0.5;        // the rect min ratio
-    min_box_area = 2000;    // the min area of the box
-    max_dx = 50;            // the center of the blob max delta x pixel
-    max_text_box_area = 10000;  //
-    min_color_box_area = 16000;
+    /** text box parameter **/
+    textBox.max_ratio = 1;  // the rect max ratio
+    textBox.min_ratio = 0.5;    // the rect min ratio
+    textBox.max_area = 15000;
+    textBox.min_area = 2000;    // the min area of the box
 
+    /** color box area **/
+    colorBox.min_area = 18000;
+    colorBox.max_ratio = 3.5;
+    colorBox.min_ratio = 0.5;
+    colorBox.min_y = 80;
+
+    max_dx = 50;            // the center of the blob max delta x pixel
     max_angle_error = 10; // the max error angle of the deep color blob
     max_model_num = 3;      // the list of the model match
 }
-
+/**
+ * @brief the top task of the detection
+ * */
 void MilkBoxDetector::DetectMilkBox(Mat &src) {
     source_image = src.clone();
     Preprocess(src);
     GetPossibleBox();
-    if(text_box.size()) {
+    if(forward_text_box.size()) {
         double s = getTickCount();
         TemplateMatch(src);
         //cout << "match time : " << (getTickCount() - s) * 1000 / getTickFrequency() << endl;
     }
     JudgePose();
-    for(auto &i : text_box) {
+    for(auto &i : forward_text_box) {
         Point2f *pts_4 = new Point2f[4];
         i.points(pts_4);
         for(int j=0;j<4;j++){
             line(src,pts_4[j],pts_4[(j+1)%4],Scalar(255,145,0),2);
         }
     }
-    for(auto &i : color_box) {
-        Point2f *pts_4 = new Point2f[4];
-        i.points(pts_4);
+    for(auto &i : roi_big_blob) {
         for(int j=0;j<4;j++){
-            line(src,pts_4[j],pts_4[(j+1)%4],Scalar(0,255,0),2);
+            line(src,i.pts_4[j],i.pts_4[(j+1)%4],Scalar(0,255,0),2);
         }
     }
     putText(src, "pose: ", Point(0, 30), cv::FONT_HERSHEY_SIMPLEX, 1, Scalar(0, 255, 0),
@@ -48,64 +54,73 @@ void MilkBoxDetector::DetectMilkBox(Mat &src) {
 }
 
 void MilkBoxDetector::Preprocess(Mat &src) {
-    Mat dst;
+    Mat dst , cannyEdge;
     source_image = src.clone();
     cvtColor(source_image, gray, COLOR_BGR2GRAY);
-    //threshold(gray,binary,50,255,THRESH_BINARY);
-    threshold(gray,binary_inv,50,255,THRESH_BINARY_INV);
+    threshold(gray,binary,50,255,THRESH_BINARY);
+    threshold(gray,binary_inv,60,255,THRESH_BINARY_INV);
     Mat element = getStructuringElement(MORPH_RECT,Size(3,3));
     morphologyEx(binary_inv,binary_inv,MORPH_OPEN,element);
+    //dilate(binary,binary,element);
+    //Canny(gray,cannyEdge,100,180);
+    //imshow("canny",cannyEdge);
     imshow("gray",gray);
-    //imshow("binary",binary);
+    imshow("binary",binary);
     imshow("binary inv",binary_inv);
 }
-
+/**
+ * @brief use the deep color on the box's surface, filter the possible roi
+ * */
 void MilkBoxDetector::GetPossibleBox(){
     color_box.clear(); // empty the condition
-    text_box.clear();
-    vector<vector<Point>> inv_contours;
+    forward_text_box.clear();
+    roi_big_blob.clear();
+    vector<vector<Point>> inv_contours, contours;
     findContours(binary_inv,inv_contours,RETR_EXTERNAL,CHAIN_APPROX_NONE);
-    Mat background = Mat::zeros(Size(640,480),CV_8UC1);
+    Mat background = Mat::zeros(Size(FRAME_WIDTH,FRAME_WIDTH),CV_32FC1);
     RotatedRect box;
     for(auto &i : inv_contours) {
         if(i.size() < 50) continue;
         box = minAreaRect(i);
 
-        if(abs(box.center.x - 640/2) > max_dx) continue; // only detect the milk box which locates in the middle
-        //if(box.center.y < 150) continue;
-
-        float ratio = (box.size.width > box.size.height) ? box.size.width / box.size.height : box.size.height / box.size.width;
-        if(ratio > max_ratio || ratio < min_ratio) continue; // a condition about the roi w/h ratio
-
-        float box_area = box.size.width * box.size.height;
-        if(box_area < min_box_area) continue; // a condition about roi area;
+        // only detect the milk box which locates in the middle
+        if(abs(box.center.x - FRAME_WIDTH / 2) > max_dx) continue;
 
         float angle = fabs(box.angle);
-        if(angle - 90.0 > max_angle_error && angle > max_angle_error) continue;
-
-        if(box_area < max_text_box_area) { // the text box
-            //printf("ratio : %f\t", ratio);
-            if(box.center.y < 50) continue;
-            text_box.push_back(box);
-        }
-        else {
-            if(box.center.y < 150) continue;
-            if(box_area < min_color_box_area) continue;
-            //  cout << "area : " << box_area << endl;
-            color_box.push_back(box); // store the possible which possibly include the text;
-        }
+        if(fabs(angle - 90.0) > max_angle_error && angle > max_angle_error) continue;
+        // a condition about the roi h/w ratio
+        float ratio = (fabs(box.angle) < 10) ? box.size.height/box.size.width : box.size.width/box.size.height;
+        float box_area = box.size.width * box.size.height;
 
         Point2f *pts_4 = new Point2f[4];
         box.points(pts_4);
         for(int j=0;j<4;j++){
             line(background,pts_4[j],pts_4[(j+1)%4],Scalar(255));
         }
-    }
-}
 
+        if(box_area > textBox.min_area && box_area < textBox.max_area) {
+            if(ratio > textBox.max_ratio || ratio < textBox.min_ratio) continue;
+            forward_text_box.push_back(box);
+        }else if(box_area > colorBox.min_area) {
+            if(ratio > colorBox.max_ratio || ratio < colorBox.min_ratio) continue;
+            if(box.center.y < colorBox.min_y) continue;
+            roiBox temp_color_box(box,box_area);
+            roi_big_blob.push_back(temp_color_box);
+        }else
+            continue;
+
+    }
+    //imshow("back",background);
+}
+/**
+ * @brief judge the pose of the milk boxes which totally include 7 conditions
+ *  --   |   =   -|  |-  ||  none
+ *  1    2   3   4   5   6   0
+ * */
 void MilkBoxDetector::JudgePose() {
-    Point2f s = Point2f(text_box.size(),color_box.size());
-    int total_box = s.x + s.y;
+    int text_num = forward_text_box.size(), color_num = roi_big_blob.size();
+    int total_box = text_num + color_num;
+    /// the number of the milk boxes in the camera vision can't be more than 2
     if(total_box > 3) {
         printf("--- ERROR DETECT !\n");
         return;
@@ -113,31 +128,40 @@ void MilkBoxDetector::JudgePose() {
         pose = 0;
         return;
     }
-    if(s.x == 1 && s.y == 0)
-        pose = 1;
-    else if(s.x == 0 && s.y == 1) {
-        if(color_box.back().center.y > 280)
-            pose = 2;
+    /// while the following steps only detected some color blobs but didn't include test box
+    if(!text_num && color_num ) {
+        if(color_num >= 2) {
+            pose = 6;
+        }
         else {
-            float area = color_box.back().size.width * color_box.back().size.height;
-            float ratio = color_box.back().size.width / color_box.back().size.height;
-            float angle = color_box.back().angle;
-            if(area < 60000)
-                pose = 4;
-            else
+            int y_ = roi_big_blob.back().rect.center.y;
+            float area = roi_big_blob.back().area;
+            if(roi_big_blob.back().h2w > 1.4) {
                 pose = 6;
-            //printf("%f\t%f\t%f\n",area,ratio,angle);
+            }
+            else {
+                if(y_ > FRAME_HEIGHT/2 + 50)
+                    pose = 2;
+                else
+                    pose = 4;
+            }
+            printf("y: %d\tarea: %f\n",y_,area);
         }
     }
-    else if(s.x == 2)
-        pose = 3;
-    else if(s.x == 1 && s.y == 1)
+    else if( text_num && !color_num) {
+        pose = (text_num > 1) ? 3 : 1;
+    }
+    else {
         pose = 5;
+    }
 
 }
-
+/**
+ * @brief the forward surface of the milk box contain the text "特仑苏", so I suppose to use a
+ * template to match the words in order to filter the roi which may be wrongly detecting
+ * */
 void MilkBoxDetector::TemplateMatch(Mat &src) {
-    for(auto &i : text_box) {
+    for(auto &i : forward_text_box) {
         i.points(srcPoint);
         Point p;
         if(fabs(i.angle) < 45) {
@@ -163,7 +187,7 @@ void MilkBoxDetector::TemplateMatch(Mat &src) {
         tempImg = warpPerspective_dst.colRange(28,108); // the text size is 80 x 36 pixel
         tempImg = tempImg.rowRange(18,54);
 
-        for(model_cnt = 1; model_cnt < max_model_num; model_cnt++){
+        for(model_cnt = 1; model_cnt <= max_model_num; model_cnt++){
             string temp_path = string("../TemplateModel/" + to_string(model_cnt)).append(".jpg");
             Mat model = imread(temp_path, CV_8UC1);
             //imshow("template",model);
@@ -186,12 +210,13 @@ void MilkBoxDetector::TemplateMatch(Mat &src) {
                 rectangle(text_roi, matchLoc, Point(matchLoc.x + model.cols, matchLoc.y + model.rows), Scalar(255, 2, 250), 2, 8, 0);
                 circle(text_roi, center, 2, Scalar(0, 255, 0), 2);
                 imshow("match result", text_roi);
-                if(minVal < 1e-07) break;
+                //cout << "min difference : " << minVal << endl;
+                if(fabs(minVal) < 5e-08) break; // if the square deviation is small enough,
             }
         }
         if(model_cnt > max_model_num) { // which means template match does not success, delete this rotateRect
-            swap(i,text_box[text_box.size()-1]);
-            text_box.pop_back();
+            swap(i, forward_text_box[forward_text_box.size() - 1]);
+            forward_text_box.pop_back();
         }
     }
 }

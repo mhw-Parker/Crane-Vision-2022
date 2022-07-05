@@ -14,7 +14,7 @@ using namespace cv;
 
 string savePath = "../photos/";
 
-bool debug = true;
+bool debug = false;
 
 string FileLocation(string Location, int num, string EndLocationType)
 {
@@ -32,10 +32,12 @@ int main(int argc, char** argv)
     MilkBoxDetector detector;
     int start_num = 0; //the start number of the first photo
     Mat frame;
-    if(driver.StartGrab())
-        printf("camera set successfully ! \n");
-    else
-        return 0;
+    if(!debug) {
+        if(driver.StartGrab())
+            printf("camera set successfully ! \n");
+        else
+            return 0;
+    }
     while(1){
         if(debug) {
             string src_path = FileLocation(savePath,++start_num,".jpg");
