@@ -64,9 +64,9 @@ void MilkBoxDetector::Preprocess(Mat &src) {
     //dilate(binary,binary,element);
     //Canny(gray,cannyEdge,100,180);
     //imshow("canny",cannyEdge);
-    imshow("gray",gray);
-    imshow("binary",binary);
-    imshow("binary inv",binary_inv);
+    //imshow("gray",gray);
+    //imshow("binary",binary);
+    //imshow("binary inv",binary_inv);
 }
 /**
  * @brief use the deep color on the box's surface, filter the possible roi
@@ -211,7 +211,7 @@ void MilkBoxDetector::TemplateMatch(Mat &src) {
                 circle(text_roi, center, 2, Scalar(0, 255, 0), 2);
                 imshow("match result", text_roi);
                 //cout << "min difference : " << minVal << endl;
-                if(fabs(minVal) < 5e-08) break; // if the square deviation is small enough,
+                if(fabs(minVal) < 5e-08 && minVal) break; // if the square deviation is small enough,
             }
         }
         if(model_cnt > max_model_num) { // which means template match does not success, delete this rotateRect
