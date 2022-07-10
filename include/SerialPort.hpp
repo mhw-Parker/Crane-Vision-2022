@@ -13,7 +13,6 @@
 #include <cstring>
 #include <cstdio>
 
-#include "log.h"
 
 #define PC2STM32 "/dev/ttyUSB0"//串口位置
 
@@ -21,7 +20,8 @@
 /*--------------------------------暂定协议-------------------------------------*/
 
 //暂定 4 字节,头 1 字节,数据 2 字节,尾 1 字节
-#define    VISION_LENGTH        4
+#define    SEND_LENGTH        4
+#define     RECEIVE_LENGTH      3
 //起始字节,协议固定为0xA5
 #define    VISION_SOF         (0xA5)
 //end字节,协议固定为0xA5
@@ -45,16 +45,6 @@ BYTE   |  1   |     1      |  1   |
 ------------------------------------------------------------------------------------------------------------------------------------------------
 **/
 /**---------------------------------------RECEIVE DATA PROTOCOL------------------------------------------------------------------------------**/
-/**DESCRIPTION:
- * head: 0xA5
- * CmdID: Command ID
- * yawAngle: current yaw angle of pan-tilt
- * pitchAngle: current pitch angle of pan-tilt
- * yawSpeed: current spin speed of yaw direction
- * pitchSpeed: current pitch angle of pan-tilt
- * targetMode: the mode of vision task(AUTOSHOOT/ENERGY)
- * targetColor: blue or red enemy
- */
 
 using namespace std;
 
@@ -79,7 +69,7 @@ private:
     char nEvent;
     int nBits;
     int nStop;
-    uint8_t buff[VISION_LENGTH];
+    uint8_t buff[SEND_LENGTH];
     uint8_t  buffRead[100];
     uint8_t curBuf;
     int readCount;

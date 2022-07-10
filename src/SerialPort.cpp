@@ -80,7 +80,7 @@ void Serial::pack(uint8_t pose, uint8_t identify)
     buff[0] = VISION_SOF;
     memcpy(buff + 1, &pose, 1);
     memcpy(buff + 2, &identify, 1);
-    buff[3] = static_cast<char>(VISION_TOF);
+    buff[SEND_LENGTH-1] = static_cast<char>(VISION_TOF);
 }
 
 /**
@@ -98,7 +98,7 @@ bool Serial::WriteData() {
     //cout<<"Write Begin to USB!!!!!!!!!!!!!!!!!"<<endl;
 
     tcflush(fd, TCOFLUSH);
-    curr = write(fd, buff, VISION_LENGTH);
+    curr = write(fd, buff, SEND_LENGTH);
 
     //cout<<"Write Over to USB!!!!!!!!!!!!!!!!!"<<endl;
     if (curr < 0) {
@@ -120,8 +120,8 @@ bool Serial::WriteData() {
  * @return on finding the right data in a limited length of received data, return true, if not, return false
  */
 bool Serial::ReadData(struct ReceiveData &buffer_) {
-    memset(buffRead,0,VISION_LENGTH);
-    maxReadTime = VISION_LENGTH;
+    memset(buffRead,0,RECEIVE_LENGTH);
+    maxReadTime = RECEIVE_LENGTH;
     static int onceReadCount = 0;
 
     tcflush(fd, TCIFLUSH);
@@ -135,10 +135,10 @@ bool Serial::ReadData(struct ReceiveData &buffer_) {
     if(maxReadTime == 0)return false;
 
     readCount = 1;
-    while (readCount < VISION_LENGTH - 1)
+    while (readCount < RECEIVE_LENGTH - 1)
     {
         try{
-            onceReadCount = read(fd, (buffRead + readCount), VISION_LENGTH - readCount);
+            onceReadCount = read(fd, (buffRead + readCount), RECEIVE_LENGTH - readCount);
         }
         catch(exception e){
             //cout << e.what() << endl;
@@ -151,7 +151,7 @@ bool Serial::ReadData(struct ReceiveData &buffer_) {
         readCount += onceReadCount;
     }
 
-    if (buffRead[0] != VISION_SOF || buffRead[VISION_LENGTH - 1] != VISION_TOF){
+    if (buffRead[0] != VISION_SOF || buffRead[RECEIVE_LENGTH - 1] != VISION_TOF){
         return false;
     }
     else

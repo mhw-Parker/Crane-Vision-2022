@@ -9,7 +9,7 @@ bool Driver::InitCam()
 }
 bool Driver::StartGrab()
 {
-    capture.open(camID_0,cv::CAP_ANY);
+    capture.open(2,cv::CAP_ANY);
     if (!capture.isOpened()) {
         std::cerr << "ERROR! Unable to open camera\n";
         return 0;
@@ -24,6 +24,8 @@ bool Driver::StartGrab()
 }
 bool Driver::SetCam()
 {
+    capture.set(CAP_PROP_FRAME_WIDTH,FRAME_WIDTH);
+    capture.set(CAP_PROP_FRAME_HEIGHT,FRAME_HEIGHT);
     return true;
 }
 bool Driver::Grab(Mat& src)

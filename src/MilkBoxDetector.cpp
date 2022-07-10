@@ -12,13 +12,13 @@ MilkBoxDetector::MilkBoxDetector() {
     textBox.min_area = 2000;    // the min area of the box
 
     /** color box area **/
-    colorBox.min_area = 18000;
+    colorBox.min_area = 15000;
     colorBox.max_ratio = 3.5;
     colorBox.min_ratio = 0.5;
-    colorBox.min_y = 80;
+    colorBox.min_y = 50;
 
-    max_dx = 50;            // the center of the blob max delta x pixel
-    max_angle_error = 10; // the max error angle of the deep color blob
+    max_dx = 100;            // the center of the blob max delta x pixel
+    max_angle_error = 12; // the max error angle of the deep color blob
     max_model_num = 3;      // the list of the model match
 }
 /**
@@ -66,7 +66,7 @@ void MilkBoxDetector::Preprocess(Mat &src) {
     //imshow("canny",cannyEdge);
     //imshow("gray",gray);
     //imshow("binary",binary);
-    //imshow("binary inv",binary_inv);
+    imshow("binary inv",binary_inv);
 }
 /**
  * @brief use the deep color on the box's surface, filter the possible roi
@@ -145,7 +145,7 @@ void MilkBoxDetector::JudgePose() {
                 else
                     pose = 4;
             }
-            printf("y: %d\tarea: %f\n",y_,area);
+            printf("y: %d\tarea: %f\tratio: \n",y_,area,roi_big_blob.back().h2w);
         }
     }
     else if( text_num && !color_num) {

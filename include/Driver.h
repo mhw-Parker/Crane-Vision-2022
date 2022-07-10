@@ -10,6 +10,7 @@
 #include <iostream>
 #include <stdio.h>
 
+#include "SelfDefine.h"
 using namespace cv;
 
 class Driver

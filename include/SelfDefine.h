@@ -6,11 +6,19 @@
 #define CRANE2022_SELFDEFINE_H
 
 #ifndef SAVE_PHOTO
-#define SAVE_PHOTO 1
+#define SAVE_PHOTO 0
+#endif
+
+#ifndef SAVE_VIDEO
+#define SAVE_VIDEO 0
 #endif
 
 #ifndef DEBUG
 #define DEBUG 1
+#endif
+
+#ifndef LINUX
+#define LINUX 1
 #endif
 
 #ifndef SAVE_TEMPLATE
