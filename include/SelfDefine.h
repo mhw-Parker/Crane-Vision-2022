@@ -6,7 +6,7 @@
 #define CRANE2022_SELFDEFINE_H
 
 #ifndef SAVE_PHOTO
-#define SAVE_PHOTO 0
+#define SAVE_PHOTO 1
 #endif
 
 #ifndef SAVE_VIDEO
@@ -34,7 +34,7 @@
 #endif
 
 #ifndef TEMPLATE_PATH
-#define TEMPLATE_PATH "../model/Template/"
+#define TEMPLATE_PATH "../model/TemplateModel/"
 #endif
 
 extern bool debug_mode;

@@ -57,14 +57,14 @@ void MilkBoxDetector::Preprocess(Mat &src) {
     Mat dst , cannyEdge;
     source_image = src.clone();
     cvtColor(source_image, gray, COLOR_BGR2GRAY);
-    threshold(gray,binary,50,255,THRESH_BINARY);
-    threshold(gray,binary_inv,60,255,THRESH_BINARY_INV);
+    //threshold(gray,binary,50,255,THRESH_BINARY);
+    threshold(gray,binary_inv,50,255,THRESH_BINARY_INV);
     Mat element = getStructuringElement(MORPH_RECT,Size(3,3));
-    morphologyEx(binary_inv,binary_inv,MORPH_OPEN,element);
-    //dilate(binary,binary,element);
+    morphologyEx(binary_inv,binary_inv,MORPH_CLOSE,element);
+    erode(binary_inv,binary_inv,element);
     //Canny(gray,cannyEdge,100,180);
     //imshow("canny",cannyEdge);
-    //imshow("gray",gray);
+    imshow("gray",gray);
     //imshow("binary",binary);
     imshow("binary inv",binary_inv);
 }
@@ -102,7 +102,7 @@ void MilkBoxDetector::GetPossibleBox(){
             if(ratio > textBox.max_ratio || ratio < textBox.min_ratio) continue;
             forward_text_box.push_back(box);
         }else if(box_area > colorBox.min_area) {
-            if(ratio > colorBox.max_ratio || ratio < colorBox.min_ratio) continue;
+            //if(ratio > colorBox.max_ratio || ratio < colorBox.min_ratio) continue;
             if(box.center.y < colorBox.min_y) continue;
             roiBox temp_color_box(box,box_area);
             roi_big_blob.push_back(temp_color_box);
@@ -145,7 +145,7 @@ void MilkBoxDetector::JudgePose() {
                 else
                     pose = 4;
             }
-            printf("y: %d\tarea: %f\tratio: \n",y_,area,roi_big_blob.back().h2w);
+            //printf("y: %d\tarea: %f\tratio: \n",y_,area,roi_big_blob.back().h2w);
         }
     }
     else if( text_num && !color_num) {
@@ -161,6 +161,7 @@ void MilkBoxDetector::JudgePose() {
  * template to match the words in order to filter the roi which may be wrongly detecting
  * */
 void MilkBoxDetector::TemplateMatch(Mat &src) {
+    //cout << "size" << forward_text_box.size() << endl;
     for(auto &i : forward_text_box) {
         i.points(srcPoint);
         Point p;
@@ -181,12 +182,13 @@ void MilkBoxDetector::TemplateMatch(Mat &src) {
         Mat warpPerspective_mat, warpPerspective_dst, text_roi;
         warpPerspective_mat = getPerspectiveTransform(srcPoint, dstPoint);
         warpPerspective(gray, warpPerspective_dst, warpPerspective_mat, Size(1.37*temHeight,temHeight), INTER_LINEAR, BORDER_CONSTANT, Scalar(0));
-        warpPerspective(source_image,text_roi,warpPerspective_mat, Size(1.37*temHeight,temHeight), INTER_LINEAR, BORDER_CONSTANT, Scalar(0));
+        warpPerspective(gray,text_roi,warpPerspective_mat, Size(1.37*temHeight,temHeight), INTER_LINEAR, BORDER_CONSTANT, Scalar(0));
         resize(warpPerspective_dst,warpPerspective_dst,Size(1.37*temHeight,temHeight));
         //imshow("warpPerspective",warpPerspective_dst);
         tempImg = warpPerspective_dst.colRange(28,108); // the text size is 80 x 36 pixel
         tempImg = tempImg.rowRange(18,54);
-
+        //tempImg = warpPerspective_dst.clone();
+        bool match_flag = false;
         for(model_cnt = 1; model_cnt <= max_model_num; model_cnt++){
             string temp_path = string(TEMPLATE_PATH + to_string(model_cnt)).append(".jpg");
             Mat model = imread(temp_path, CV_8UC1);
@@ -210,11 +212,14 @@ void MilkBoxDetector::TemplateMatch(Mat &src) {
                 rectangle(text_roi, matchLoc, Point(matchLoc.x + model.cols, matchLoc.y + model.rows), Scalar(255, 2, 250), 2, 8, 0);
                 circle(text_roi, center, 2, Scalar(0, 255, 0), 2);
                 imshow("match result", text_roi);
-                //cout << "min difference : " << minVal << endl;
-                if(fabs(minVal) < 5e-08 && minVal) break; // if the square deviation is small enough,
+                cout << "min difference : " << minVal << endl;
+                if(fabs(minVal) < 3e-08) {
+                    match_flag = true;
+                    break; // if the square deviation is small enough,
+                }
             }
         }
-        if(model_cnt > max_model_num) { // which means template match does not success, delete this rotateRect
+        if(!match_flag) { // which means template match does not success, delete this rotateRect
             swap(i, forward_text_box[forward_text_box.size() - 1]);
             forward_text_box.pop_back();
         }

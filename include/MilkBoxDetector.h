@@ -71,7 +71,7 @@ private:
     vector<roiBox> roi_big_blob;
 
     Point2f srcPoint[4], dstPoint[4];
-    int model_cnt = 1, max_model_num;
+    int model_cnt = 1, max_model_num = 5;
 
 private:
     float max_dx;
