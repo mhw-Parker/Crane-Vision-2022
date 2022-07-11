@@ -188,7 +188,7 @@ void MilkBoxDetector::TemplateMatch(Mat &src) {
         tempImg = tempImg.rowRange(18,54);
 
         for(model_cnt = 1; model_cnt <= max_model_num; model_cnt++){
-            string temp_path = string("../TemplateModel/" + to_string(model_cnt)).append(".jpg");
+            string temp_path = string(TEMPLATE_PATH + to_string(model_cnt)).append(".jpg");
             Mat model = imread(temp_path, CV_8UC1);
             //imshow("template",model);
             if(model.empty()) {

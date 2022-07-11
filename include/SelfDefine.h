@@ -18,7 +18,7 @@
 #endif
 
 #ifndef LINUX
-#define LINUX 1
+#define LINUX 0
 #endif
 
 #ifndef SAVE_TEMPLATE
@@ -31,6 +31,10 @@
 
 #ifndef FRAME_HEIGHT
 #define FRAME_HEIGHT 480
+#endif
+
+#ifndef TEMPLATE_PATH
+#define TEMPLATE_PATH "../model/Template/"
 #endif
 
 extern bool debug_mode;

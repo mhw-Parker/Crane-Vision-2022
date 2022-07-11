@@ -15,7 +15,6 @@
 using namespace std;
 using namespace cv;
 
-
 /**
  * @brief the parameters about the contours
  * */
@@ -24,7 +23,6 @@ static struct param {
     float max_area, min_area;
     int max_x, max_y, min_x, min_y;
 }param;
-
 /**
  * @brief create a new class to store redefine the height and width of the color blobs
  * */
@@ -76,8 +74,6 @@ private:
     int model_cnt = 1, max_model_num;
 
 private:
-    void SetWarpPoint();
-
     float max_dx;
     float max_angle_error;
     float temHeight = 100;

@@ -35,7 +35,7 @@ string FileLocation(string Location, int num, string EndLocationType)
 {
     string imageFileName;
     std::stringstream StrStm1;
-    StrStm1 << num + 1;
+    StrStm1 << num;
     StrStm1 >> imageFileName;
     imageFileName += EndLocationType;
     return Location + imageFileName;
@@ -51,7 +51,7 @@ void Produce(){
     while (1) {
         Mat frame;
         if(debug) {
-            string src_path = FileLocation(savePath,77,".jpg");
+            string src_path = FileLocation(savePath,210,".jpg");
             driver.Grab(frame,src_path);
         } else {
             driver.Grab(frame);
@@ -136,7 +136,7 @@ void Consume(){
 #endif
 #if SAVE_TEMPLATE == 1
         if(!detector.tempImg.empty()) {
-            string path = FileLocation("../TemplateModel/",++start_num,".jpg");
+            string path = FileLocation(TEMPLATE_PATH,++start_num,".jpg");
             imwrite(path,detector.tempImg);
         }
 #endif
@@ -151,7 +151,7 @@ int main(int argc, char** argv)
 #endif
    std::thread grabThread(Produce);
    std::thread detectThread(Consume);
-   //cout << grabThread.get_id() << '\t' << detectThread.get_id() << endl;
+
    if(grabThread.joinable() && grabThread.joinable()) {
        printf("Thread start !\n");
        grabThread.join();
