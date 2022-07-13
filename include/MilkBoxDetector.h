@@ -8,6 +8,7 @@
 #include <iostream>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/opencv.hpp>
+#include <opencv2/dnn.hpp>
 #include <string>
 
 #include "SelfDefine.h"
@@ -55,6 +56,13 @@ public:
     /**  1   2  3   4   6  5    0    **/
     int pose;
     Mat tempImg;
+
+private:
+    void yolov5Detector(Mat &src);
+    void init_yolov5();
+    dnn::Net model;
+    string model_path;
+    vector<string> outLayerNames;
 
 private:
     void Preprocess(Mat &src);

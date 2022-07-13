@@ -58,7 +58,7 @@ void MilkBoxDetector::Preprocess(Mat &src) {
     source_image = src.clone();
     cvtColor(source_image, gray, COLOR_BGR2GRAY);
     //threshold(gray,binary,50,255,THRESH_BINARY);
-    threshold(gray,binary_inv,50,255,THRESH_BINARY_INV);
+    threshold(gray,binary_inv,60,255,THRESH_BINARY_INV);
     Mat element = getStructuringElement(MORPH_RECT,Size(3,3));
     morphologyEx(binary_inv,binary_inv,MORPH_CLOSE,element);
     erode(binary_inv,binary_inv,element);
@@ -149,7 +149,16 @@ void MilkBoxDetector::JudgePose() {
         }
     }
     else if( text_num && !color_num) {
-        pose = (text_num > 1) ? 3 : 1;
+        if(text_num == 1) pose = 1;
+        if(text_num == 2) {
+            float delta_y = fabs(forward_text_box.back().center.y - forward_text_box.front().center.y);
+            cout << delta_y << endl;
+            if(delta_y > 100) {
+                pose = 3;
+            }else
+                pose = 0;
+        }
+        //pose = (text_num > 1) ? 3 : 1;
     }
     else {
         pose = 5;
@@ -189,7 +198,7 @@ void MilkBoxDetector::TemplateMatch(Mat &src) {
         tempImg = tempImg.rowRange(18,54);
         //tempImg = warpPerspective_dst.clone();
         bool match_flag = false;
-        for(model_cnt = 1; model_cnt <= max_model_num; model_cnt++){
+        for(model_cnt = 1; model_cnt < max_model_num; model_cnt++){
             string temp_path = string(TEMPLATE_PATH + to_string(model_cnt)).append(".jpg");
             Mat model = imread(temp_path, CV_8UC1);
             //imshow("template",model);
@@ -210,10 +219,10 @@ void MilkBoxDetector::TemplateMatch(Mat &src) {
                 // draw out the most possible text box
                 Point center = Point(minLoc.x + model.cols / 2, minLoc.y + model.rows / 2);
                 rectangle(text_roi, matchLoc, Point(matchLoc.x + model.cols, matchLoc.y + model.rows), Scalar(255, 2, 250), 2, 8, 0);
-                circle(text_roi, center, 2, Scalar(0, 255, 0), 2);
-                imshow("match result", text_roi);
+                circle(text_roi, center, 2, Scalar(255, 255, 255), 2);
                 cout << "min difference : " << minVal << endl;
                 if(fabs(minVal) < 3e-08) {
+                    imshow("match result", text_roi);
                     match_flag = true;
                     break; // if the square deviation is small enough,
                 }
@@ -225,7 +234,62 @@ void MilkBoxDetector::TemplateMatch(Mat &src) {
         }
     }
 }
+void MilkBoxDetector::init_yolov5() {
+    model_path = "../model/yolo.onnx";  // inference by onnx
+    model = dnn::readNetFromONNX(model_path);
+    model.setPreferableBackend(dnn::DNN_BACKEND_CUDA);
+    model.setPreferableTarget(dnn::DNN_TARGET_CUDA);
+    outLayerNames = model.getUnconnectedOutLayersNames();
+}
+/**
+ * @brief detect by yolov5
+ * */
+void MilkBoxDetector::yolov5Detector(Mat &src) {
+    Mat img = src.clone();
+    Mat blob;
+    cv::dnn::blobFromImage(img, blob, 1 / 255.0f, Size(640,640), Scalar(0,0,0), true, false);
+    model.setInput(blob);
+    vector<Mat> output;
+    model.forward(output, outLayerNames);
 
+    vector<Rect> boxes;
+    vector<int> id; // number
+    vector<float> confidences; //
+    vector<int> indices;
+
+    for(size_t i = 0; i < output.size(); ++i) {
+        float* data = (float*)output[i].data;
+        for (int j = 0; j < output[i].rows; ++j, data += output[i].cols)
+        {
+            Mat scores = output[i].row(j).colRange(5, output[i].cols);
+            Point classIdPoint;
+            double confidence;
+            minMaxLoc(scores, 0, &confidence, 0, &classIdPoint);
+            if (confidence > 0.5)
+            {
+                int centerX = (int)(data[0] * img.cols);
+                int centerY = (int)(data[1] * img.rows);
+                int width = (int)(data[2] * img.cols);
+                int height = (int)(data[3] * img.rows);
+                int left = centerX - width / 2;
+                int top = centerY - height / 2;
+
+                id.push_back(classIdPoint.x);
+                confidences.push_back((float)confidence);
+                boxes.push_back(Rect(left, top, width, height));
+            }
+        }
+    }
+    dnn::NMSBoxes(boxes, confidences, 0.5, 0.1, indices);
+    for (size_t i = 0; i < indices.size(); ++i)
+    {
+        int idx = indices[i];
+        Rect box = boxes[idx];
+        //String className = classNamesVec[classIds[idx]];
+        putText(src, to_string(idx), box.tl(), FONT_HERSHEY_SIMPLEX, 1.0, Scalar(255, 0, 0), 2, 8);//???δ?????????????????
+        rectangle(src, box, Scalar(0, 0, 255), 2, 8, 0);//???δ?????????????????
+    }
+}
 
 
 

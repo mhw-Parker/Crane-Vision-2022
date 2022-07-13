@@ -18,7 +18,7 @@
 #endif
 
 #ifndef LINUX
-#define LINUX 0
+#define LINUX 1
 #endif
 
 #ifndef SAVE_TEMPLATE

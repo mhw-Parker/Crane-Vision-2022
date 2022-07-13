@@ -16,10 +16,10 @@ ReceiveData receiveData;
 using namespace std;
 using namespace cv;
 
-string savePath = "../photos/";
+string savePath = "../output/photos/";
 
-bool debug = true;
-int start_num = 75; //the start number of the first photo
+bool debug = false;
+int start_num = 450; //the start number of the first photo
 int cnt = 0;
 bool start_flag = false;
 bool identify = false;
@@ -40,8 +40,24 @@ string FileLocation(string Location, int num, string EndLocationType)
     imageFileName += EndLocationType;
     return Location + imageFileName;
 }
-
-void Produce(){
+/**
+ * @brief get current time from system
+ */
+inline string getSysTime() {
+    time_t timep;
+    time(&timep);
+    char tmp[64];
+    strftime(tmp, sizeof(tmp), "%Y-%m-%d_%H_%M_%S", localtime(&timep));
+    return tmp;
+}
+#if SAVE_VIDEO == 1
+string video_path = string("../output/video/" + getSysTime()).append(".avi");
+cv::VideoWriter save_video(video_path, cv::VideoWriter::fourcc('M', 'J', 'P', 'G'), 50.0, cv::Size(FRAME_WIDTH, FRAME_HEIGHT));
+#endif
+/**
+ * @brief producer get source and provide for consumer
+ * */
+void Produce() {
     if(!debug) {
         if(driver.StartGrab() && driver.SetCam())
             printf("camera set successfully ! \n");
@@ -51,19 +67,23 @@ void Produce(){
     while (1) {
         Mat frame;
         if(debug) {
-            string src_path = FileLocation(savePath,210,".jpg");
+            string src_path = FileLocation(savePath,323,".jpg");
             driver.Grab(frame,src_path);
         } else {
             driver.Grab(frame);
 #if LINUX == 1
             flip(frame,frame,-1);
 #endif
+#if SAVE_VIDEO == 1
+            save_video.write(frame);
+#endif
 #if SAVE_PHOTO == 1
 #if LINUX == 1
-            if(cnt++%500==0) {
+            if(cnt++%100==0) {
                 string path = FileLocation(savePath,start_num++,".jpg");
                 imwrite(path,frame);
-                printf("take a shot !\n");
+                cout << "the " << start_num << "photos" << endl;
+                printf("take %d shot !\n",start_num);
             }
 #else
             if(waitKey(10) == 32) {
@@ -72,7 +92,6 @@ void Produce(){
                 printf("take a shot !\n");
             }
 #endif
-
 #endif
         }
         if(frame.empty()) {
@@ -81,11 +100,15 @@ void Produce(){
         }
         mat_queue.push(frame);
         if(debug) {
-            this_thread::sleep_for(1000ms);
+            this_thread::sleep_for(500ms);
             //waitKey();
         }
     }
 }
+/**
+ * @brief consumer consume source from producer
+ * @details detector use frame from camera
+ * */
 void Consume(){
     while (1) {
         dst = mat_queue.wait_and_pop().clone();
@@ -142,6 +165,9 @@ void Consume(){
 #endif
     }
 }
+/**
+ * @brief main function
+ * */
 int main(int argc, char** argv)
 {
 #if LINUX == 1
