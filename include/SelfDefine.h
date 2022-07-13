@@ -37,6 +37,10 @@
 #define TEMPLATE_PATH "../model/TemplateModel/"
 #endif
 
+#ifndef MODEL_MODE
+#define MODEL_MODE 1
+#endif
+
 extern bool debug_mode;
 
 #endif //CRANE2022_SELFDEFINE_H

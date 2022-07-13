@@ -9,23 +9,27 @@ bool Driver::InitCam()
 }
 bool Driver::StartGrab()
 {
-    capture.open(2,cv::CAP_ANY);
-    if (!capture.isOpened()) {
-        std::cerr << "ERROR! Unable to open camera\n";
-        return 0;
-    } else {
-        Mat src;
-        capture.read(src);
-        frameWidth = src.cols;
-        frameHeight = src.rows;
-        printf("camera image size : %d x %d\n",frameWidth,frameHeight);
-        return true;
+    for(int cam_id = 0; cam_id < 3; cam_id++) {
+        capture.open(cam_id,cv::CAP_ANY);
+        if (!capture.isOpened()) {
+            std::cerr << "ERROR! Unable to open camera\n";
+            continue;
+        } else {
+            Mat src;
+            capture.read(src);
+            frameWidth = src.cols;
+            frameHeight = src.rows;
+            printf("camera image size : %d x %d\n",frameWidth,frameHeight);
+            return true;
+        }
     }
+    return false;
 }
 bool Driver::SetCam()
 {
     capture.set(CAP_PROP_FRAME_WIDTH,FRAME_WIDTH);
     capture.set(CAP_PROP_FRAME_HEIGHT,FRAME_HEIGHT);
+    printf("camera image resize to : %d x %d\n",FRAME_WIDTH,FRAME_HEIGHT);
     return true;
 }
 bool Driver::Grab(Mat& src)

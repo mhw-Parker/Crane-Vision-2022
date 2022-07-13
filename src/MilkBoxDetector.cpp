@@ -21,10 +21,22 @@ MilkBoxDetector::MilkBoxDetector() {
     max_angle_error = 12; // the max error angle of the deep color blob
     max_model_num = 3;      // the list of the model match
 }
+void MilkBoxDetector::clearAll() {
+    big_face.clear();
+    small_face.clear();
+}
+
 /**
  * @brief the top task of the detection
  * */
 void MilkBoxDetector::DetectMilkBox(Mat &src) {
+#if MODEL_MODE == 1
+    clearAll();
+    yolov5Detector(src);
+    modelDetectPose();
+    putText(src, "pose: ", Point(10, 30), cv::FONT_HERSHEY_SIMPLEX, 1, colors[1], 2, 8, 0);
+    putText(src, to_string(pose), Point(100, 35), cv::FONT_HERSHEY_PLAIN, 2, colors[1], 2, 8, 0);
+#else
     source_image = src.clone();
     Preprocess(src);
     GetPossibleBox();
@@ -51,6 +63,7 @@ void MilkBoxDetector::DetectMilkBox(Mat &src) {
             8, 0);
     putText(src, to_string(pose), Point(100, 30), cv::FONT_HERSHEY_PLAIN, 2,
             Scalar(0, 255, 0), 2, 8, 0);
+#endif
 }
 
 void MilkBoxDetector::Preprocess(Mat &src) {
@@ -234,9 +247,10 @@ void MilkBoxDetector::TemplateMatch(Mat &src) {
         }
     }
 }
-void MilkBoxDetector::init_yolov5() {
-    model_path = "../model/yolo.onnx";  // inference by onnx
-    model = dnn::readNetFromONNX(model_path);
+void MilkBoxDetector::init_yolov5(string &yolo_path) {
+    //model_path = "../model/best.onnx";  // inference by onnx
+    cout << "model path : " << yolo_path << endl;
+    model = dnn::readNetFromONNX(yolo_path);
     model.setPreferableBackend(dnn::DNN_BACKEND_CUDA);
     model.setPreferableTarget(dnn::DNN_TARGET_CUDA);
     outLayerNames = model.getUnconnectedOutLayersNames();
@@ -245,52 +259,102 @@ void MilkBoxDetector::init_yolov5() {
  * @brief detect by yolov5
  * */
 void MilkBoxDetector::yolov5Detector(Mat &src) {
-    Mat img = src.clone();
+    double st = getTickCount();
+    Mat img = format_yolov5(src);
     Mat blob;
-    cv::dnn::blobFromImage(img, blob, 1 / 255.0f, Size(640,640), Scalar(0,0,0), true, false);
+    cv::dnn::blobFromImage(img, blob, 1 / 255.0f, Size(INPUT_HEIGHT,INPUT_WIDTH), Scalar(0,0,0), true, false);
     model.setInput(blob);
     vector<Mat> output;
     model.forward(output, outLayerNames);
 
+    float x_factor = img.cols / INPUT_WIDTH;
+    float y_factor = img.rows / INPUT_HEIGHT;
+    
+    float *data = (float *)output[0].data;
+    const int dimensions = 85;
+    const int rows = 25200;
+
     vector<Rect> boxes;
-    vector<int> id; // number
+    vector<int> ids; // number
     vector<float> confidences; //
-    vector<int> indices;
 
-    for(size_t i = 0; i < output.size(); ++i) {
-        float* data = (float*)output[i].data;
-        for (int j = 0; j < output[i].rows; ++j, data += output[i].cols)
-        {
-            Mat scores = output[i].row(j).colRange(5, output[i].cols);
-            Point classIdPoint;
-            double confidence;
-            minMaxLoc(scores, 0, &confidence, 0, &classIdPoint);
-            if (confidence > 0.5)
-            {
-                int centerX = (int)(data[0] * img.cols);
-                int centerY = (int)(data[1] * img.rows);
-                int width = (int)(data[2] * img.cols);
-                int height = (int)(data[3] * img.rows);
-                int left = centerX - width / 2;
-                int top = centerY - height / 2;
+    //cout << "size : " << output.size() << endl;
+    for(int i = 0; i < rows; ++i) {
+        float confidence = data[4];
+        if (confidence >= CONF_THRESH) {
+            float * classes_scores = data + 5;
+            cv::Mat scores(1, 2, CV_32FC1, classes_scores);
+            cv::Point class_id;
+            double max_class_score;
+            minMaxLoc(scores, 0, &max_class_score, 0, &class_id);
+            if (max_class_score > SCORE_THRESH) {
 
-                id.push_back(classIdPoint.x);
-                confidences.push_back((float)confidence);
-                boxes.push_back(Rect(left, top, width, height));
+                confidences.push_back(confidence);
+
+                ids.push_back(class_id.x);
+
+                float x = data[0];
+                float y = data[1];
+                float w = data[2];
+                float h = data[3];
+                int left = int((x - 0.5 * w) * x_factor);
+                int top = int((y - 0.5 * h) * y_factor);
+                int width = int(w * x_factor);
+                int height = int(h * y_factor);
+                boxes.push_back(cv::Rect(left, top, width, height));
             }
+
+        }
+        data+=85;
+    }
+    std::vector<int> nms_result;    
+    dnn::NMSBoxes(boxes, confidences, SCORE_THRESH, NMS_THRESH, nms_result);
+    for (int i = 0; i < nms_result.size(); i++)
+    {
+        int idx = nms_result[i];
+        int box_id = ids[idx];
+        Rect box = boxes[idx];
+        if(fabs(box.x-FRAME_WIDTH/2) > max_dx) continue; 
+        if(box_id == 0) {
+            big_face.push_back(box);
+            putText(src, to_string(box_id), box.tl(), FONT_HERSHEY_SIMPLEX, 1.0, colors[0], 2, 8);
+            rectangle(src, box, colors[0], 2, 8, 0);
+        } else if(box_id == 1) {
+            small_face.push_back(box);
+            putText(src, to_string(box_id), box.tl(), FONT_HERSHEY_SIMPLEX, 1.0, colors[2], 2, 8);
+            rectangle(src, box, colors[2], 2, 8, 0);
         }
     }
-    dnn::NMSBoxes(boxes, confidences, 0.5, 0.1, indices);
-    for (size_t i = 0; i < indices.size(); ++i)
-    {
-        int idx = indices[i];
-        Rect box = boxes[idx];
-        //String className = classNamesVec[classIds[idx]];
-        putText(src, to_string(idx), box.tl(), FONT_HERSHEY_SIMPLEX, 1.0, Scalar(255, 0, 0), 2, 8);//???δ?????????????????
-        rectangle(src, box, Scalar(0, 0, 255), 2, 8, 0);//???δ?????????????????
+    //cout << "onnx inference latency : " << (getTickCount()-st) / getTickFrequency() * 1000 << "ms" << endl;
+    //imshow("dst0",src);
+}
+
+void MilkBoxDetector::modelDetectPose(){
+    int front_num = big_face.size();
+    int side_num = small_face.size();
+    if(front_num + side_num > 2) {
+        /* take out the boxes which near frame center */
+    }
+    if(!front_num && !side_num) {
+        pose = 0;
+    } else if (front_num && !side_num){
+        pose = (front_num <= 1) ? 1 : 3;
+    } else if (!front_num && side_num) {
+        pose = (side_num <= 1) ? 2 : 6;
+    } else {
+        int dy = big_face.back().y - small_face.back().y;
+        pose = (dy < 0) ? 5 : 4;
     }
 }
 
+Mat MilkBoxDetector::format_yolov5(Mat &src){
+    int col = src.cols;
+    int row = src.rows;
+    int _max = MAX(col, row);
+    cv::Mat result = cv::Mat::zeros(_max, _max, CV_8UC3);
+    src.copyTo(result(cv::Rect(0, 0, col, row)));
+    return result;
+}
 
 
 

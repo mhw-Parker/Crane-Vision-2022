@@ -17,8 +17,9 @@ using namespace std;
 using namespace cv;
 
 string savePath = "../output/photos/";
+string modelPath = "../model/best.onnx";
 
-bool debug = false;
+bool debug = true;
 int start_num = 450; //the start number of the first photo
 int cnt = 0;
 bool start_flag = false;
@@ -67,7 +68,7 @@ void Produce() {
     while (1) {
         Mat frame;
         if(debug) {
-            string src_path = FileLocation(savePath,323,".jpg");
+            string src_path = FileLocation(savePath,3,".jpg");
             driver.Grab(frame,src_path);
         } else {
             driver.Grab(frame);
@@ -170,6 +171,9 @@ void Consume(){
  * */
 int main(int argc, char** argv)
 {
+#if MODEL_MODE == 1
+    detector.init_yolov5(modelPath);
+#endif 
 #if LINUX == 1
     if(com.InitPort()){
         printf("Port set success !\n");

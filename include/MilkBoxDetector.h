@@ -16,6 +16,15 @@
 using namespace std;
 using namespace cv;
 
+const float INPUT_WIDTH = 640.0;
+const float INPUT_HEIGHT = 640.0;
+const float SCORE_THRESH = 0.2;
+const float NMS_THRESH = 0.4;
+const float CONF_THRESH = 0.7;
+
+const vector<Scalar> colors = {Scalar(255,0,0), Scalar(0,255,0), Scalar(0,0,255), 
+                            Scalar(255,255,0), Scalar(0,255,255)};
+
 /**
  * @brief the parameters about the contours
  * */
@@ -24,6 +33,7 @@ static struct param {
     float max_area, min_area;
     int max_x, max_y, min_x, min_y;
 }param;
+
 /**
  * @brief create a new class to store redefine the height and width of the color blobs
  * */
@@ -51,7 +61,7 @@ public:
     MilkBoxDetector();
     ~MilkBoxDetector() = default;
     void DetectMilkBox(Mat &src);
-
+    void init_yolov5(string &yolo_path);
     /** --   |  =  -|  ||  |-  none  **/
     /**  1   2  3   4   6  5    0    **/
     int pose;
@@ -59,10 +69,14 @@ public:
 
 private:
     void yolov5Detector(Mat &src);
-    void init_yolov5();
+    void modelDetectPose();
+    Mat format_yolov5(Mat &src);
+    void clearAll();
+    
     dnn::Net model;
     string model_path;
     vector<string> outLayerNames;
+    vector<Rect> big_face, small_face;
 
 private:
     void Preprocess(Mat &src);
