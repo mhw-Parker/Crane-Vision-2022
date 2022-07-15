@@ -22,7 +22,7 @@ const float SCORE_THRESH = 0.2;
 const float NMS_THRESH = 0.4;
 const float CONF_THRESH = 0.7;
 
-const vector<Scalar> colors = {Scalar(255,0,0), Scalar(0,255,0), Scalar(0,0,255), 
+const vector<Scalar> colors = {Scalar(255,0,0), Scalar(0,255,0), Scalar(0,0,255),
                             Scalar(255,255,0), Scalar(0,255,255)};
 
 /**
@@ -54,6 +54,12 @@ public:
     Point2f pts_4[4];
     float area, h2w;
     float h, w;
+    /***/
+    roiBox(Rect rect) : bounding_rect(rect) {
+        center = 0.5 * (rect.tl() + rect.br());
+    }
+    Rect bounding_rect;
+    Point2f center;
 };
 
 class MilkBoxDetector {
@@ -72,11 +78,11 @@ private:
     void modelDetectPose();
     Mat format_yolov5(Mat &src);
     void clearAll();
-    
+
     dnn::Net model;
     string model_path;
     vector<string> outLayerNames;
-    vector<Rect> big_face, small_face;
+    vector<roiBox> big_face, small_face;
 
 private:
     void Preprocess(Mat &src);

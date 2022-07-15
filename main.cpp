@@ -68,13 +68,11 @@ void Produce() {
     while (1) {
         Mat frame;
         if(debug) {
-            string src_path = FileLocation(savePath,3,".jpg");
+            string src_path = FileLocation(savePath,824,".jpg");
             driver.Grab(frame,src_path);
         } else {
             driver.Grab(frame);
-#if LINUX == 1
             flip(frame,frame,-1);
-#endif
 #if SAVE_VIDEO == 1
             save_video.write(frame);
 #endif
@@ -173,7 +171,7 @@ int main(int argc, char** argv)
 {
 #if MODEL_MODE == 1
     detector.init_yolov5(modelPath);
-#endif 
+#endif
 #if LINUX == 1
     if(com.InitPort()){
         printf("Port set success !\n");

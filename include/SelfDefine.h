@@ -6,7 +6,7 @@
 #define CRANE2022_SELFDEFINE_H
 
 #ifndef SAVE_PHOTO
-#define SAVE_PHOTO 1
+#define SAVE_PHOTO 0
 #endif
 
 #ifndef SAVE_VIDEO
