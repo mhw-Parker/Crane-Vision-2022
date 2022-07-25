@@ -19,7 +19,7 @@ using namespace cv;
 string savePath = "../output/photos/";
 string modelPath = "../model/best.onnx";
 
-bool debug = false;
+bool debug = true;
 int start_num = 1030; //the start number of the first photo
 int cnt = 0;
 bool start_flag = false;
@@ -68,7 +68,7 @@ void Produce() {
     while (1) {
         Mat frame;
         if(debug) {
-            string src_path = FileLocation(savePath,453,".jpg");
+            string src_path = FileLocation(savePath,1040,".jpg");
             driver.Grab(frame,src_path);
         } else {
             driver.Grab(frame);
@@ -131,17 +131,14 @@ void Consume(){
                 default:
                     break;
             }
-            for(int i = 0; i < 7; i++) {
-                int max_count = *max_element(pose_counter,pose_counter+7);
-                if(max_count > 2) {
-                    target_pose = max_element(pose_counter,pose_counter+7) - pose_counter;
-                    identify = true;
-                    printf("POSE : %d\tIDENTIFY : %d\n",target_pose,identify);
-                    //for(auto &j : pose_counter)
-                    //    j = 0;
-                    break;
-                }
+            
+            int max_count = *max_element(pose_counter,pose_counter+7);
+            if(max_count > 2) {
+                target_pose = max_element(pose_counter,pose_counter+7) - pose_counter;
+                identify = true;
+                printf("POSE : %d\tIDENTIFY : %d\n",target_pose,identify);
             }
+            
         }
         else {
             identify = false;
@@ -149,7 +146,7 @@ void Consume(){
                 i = 0;
         }
 #endif
-        //imshow("result",dst);
+        imshow("result",dst);
         waitKey(1);
 #if LINUX == 1
         com.pack(target_pose, identify, detector.d_x);

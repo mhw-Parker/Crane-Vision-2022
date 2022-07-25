@@ -129,15 +129,17 @@ void MilkBoxDetector::yolov5Detector(Mat &src) {
         Rect box = boxes[idx];
         roiBox temp_box(box);
         if(fabs(temp_box.center.x-FRAME_WIDTH/2) > max_dx) continue;
-        //cout << fabs(temp_box.center.x-FRAME_WIDTH/2) << endl;
+        string id_name = (!box_id) ? "A" : "B";
+        ostringstream out_str;
+        out_str << setiosflags(ios::fixed) << setprecision(2) << confidences[idx]; 
+        string output_str = id_name + " " + out_str.str();
         if(box_id == 0) {
             big_face.push_back(temp_box);
-            putText(src, to_string(box_id), box.tl(), FONT_HERSHEY_SIMPLEX, 1.0, colors[0], 2, 8);
+            putText(src, output_str, box.tl(), FONT_HERSHEY_SIMPLEX, 1.0, colors[0], 2, 8);
             rectangle(src, box, colors[0], 2, 8, 0);
         } else if(box_id == 1) {
             small_face.push_back(temp_box);
-            //cout << "side conf : " << confidences[idx] << endl;
-            putText(src, to_string(box_id), box.tl(), FONT_HERSHEY_SIMPLEX, 1.0, colors[2], 2, 8);
+            putText(src, output_str, box.tl(), FONT_HERSHEY_SIMPLEX, 1.0, colors[2], 2, 8);
             rectangle(src, box, colors[2], 2, 8, 0);
         }
         //cout << "confidence : " << confidences[idx] << endl;
