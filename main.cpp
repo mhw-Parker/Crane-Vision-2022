@@ -19,8 +19,8 @@ using namespace cv;
 string savePath = "../output/photos/";
 string modelPath = "../model/best.onnx";
 
-bool debug = true;
-int start_num = 450; //the start number of the first photo
+bool debug = false;
+int start_num = 1030; //the start number of the first photo
 int cnt = 0;
 bool start_flag = false;
 bool identify = false;
@@ -68,7 +68,7 @@ void Produce() {
     while (1) {
         Mat frame;
         if(debug) {
-            string src_path = FileLocation(savePath,824,".jpg");
+            string src_path = FileLocation(savePath,453,".jpg");
             driver.Grab(frame,src_path);
         } else {
             driver.Grab(frame);
@@ -78,11 +78,11 @@ void Produce() {
 #endif
 #if SAVE_PHOTO == 1
 #if LINUX == 1
-            if(cnt++%100==0) {
+            if(detector.pose && cnt++%30==0) {
                 string path = FileLocation(savePath,start_num++,".jpg");
                 imwrite(path,frame);
-                cout << "the " << start_num << "photos" << endl;
-                printf("take %d shot !\n",start_num);
+                cout << "--the " << start_num << "photos" << endl;
+                //printf("--take %d shot !\n",start_num);
             }
 #else
             if(waitKey(10) == 32) {
@@ -132,12 +132,13 @@ void Consume(){
                     break;
             }
             for(int i = 0; i < 7; i++) {
-                if(pose_counter[i] > 20) {
-                    target_pose = i;
+                int max_count = *max_element(pose_counter,pose_counter+7);
+                if(max_count > 2) {
+                    target_pose = max_element(pose_counter,pose_counter+7) - pose_counter;
                     identify = true;
                     printf("POSE : %d\tIDENTIFY : %d\n",target_pose,identify);
-                    for(auto &j : pose_counter)
-                        j = 0;
+                    //for(auto &j : pose_counter)
+                    //    j = 0;
                     break;
                 }
             }
@@ -148,10 +149,10 @@ void Consume(){
                 i = 0;
         }
 #endif
-        imshow("result",dst);
+        //imshow("result",dst);
         waitKey(1);
 #if LINUX == 1
-        com.pack(target_pose, identify);
+        com.pack(target_pose, identify, detector.d_x);
         if(com.WriteData()) {
             //printf("Write data success !\n");
         }

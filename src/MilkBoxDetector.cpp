@@ -136,9 +136,11 @@ void MilkBoxDetector::yolov5Detector(Mat &src) {
             rectangle(src, box, colors[0], 2, 8, 0);
         } else if(box_id == 1) {
             small_face.push_back(temp_box);
+            //cout << "side conf : " << confidences[idx] << endl;
             putText(src, to_string(box_id), box.tl(), FONT_HERSHEY_SIMPLEX, 1.0, colors[2], 2, 8);
             rectangle(src, box, colors[2], 2, 8, 0);
         }
+        //cout << "confidence : " << confidences[idx] << endl;
     }
     //cout << "onnx inference latency : " << (getTickCount()-st) / getTickFrequency() * 1000 << "ms" << endl;
     //imshow("dst0",src);
@@ -162,6 +164,14 @@ void MilkBoxDetector::modelDetectPose(){
         int dy = big_face.back().center.y - small_face.back().center.y;
         pose = (dy < 0) ? 5 : 4;
     }
+    if(side_num) {
+        d_x = small_face.front().center.x - FRAME_WIDTH/2 + x_offset;
+    }else if(front_num){
+        d_x = big_face.front().center.x - FRAME_WIDTH/2 + x_offset;
+    } else{
+        d_x = 0;
+    }
+    cout << "x pixel error : " << d_x << endl;
 }
 
 Mat MilkBoxDetector::format_yolov5(Mat &src){

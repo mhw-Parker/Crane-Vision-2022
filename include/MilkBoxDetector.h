@@ -20,7 +20,7 @@ const float INPUT_WIDTH = 640.0;
 const float INPUT_HEIGHT = 640.0;
 const float SCORE_THRESH = 0.2;
 const float NMS_THRESH = 0.4;
-const float CONF_THRESH = 0.7;
+const float CONF_THRESH = 0.75;
 
 const vector<Scalar> colors = {Scalar(255,0,0), Scalar(0,255,0), Scalar(0,0,255),
                             Scalar(255,255,0), Scalar(0,255,255)};
@@ -71,6 +71,7 @@ public:
     /** --   |  =  -|  ||  |-  none  **/
     /**  1   2  3   4   6  5    0    **/
     int pose;
+    int d_x = 0;
     Mat tempImg;
 
 private:
@@ -83,6 +84,7 @@ private:
     string model_path;
     vector<string> outLayerNames;
     vector<roiBox> big_face, small_face;
+    int x_offset = -15;
 
 private:
     void Preprocess(Mat &src);

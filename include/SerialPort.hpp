@@ -20,7 +20,7 @@
 /*--------------------------------暂定协议-------------------------------------*/
 
 //暂定 4 字节,头 1 字节,数据 2 字节,尾 1 字节
-#define    SEND_LENGTH        4
+#define    SEND_LENGTH        8
 #define     RECEIVE_LENGTH      3
 //起始字节,协议固定为0xA5
 #define    VISION_SOF         (0xA5)
@@ -79,7 +79,7 @@ private:
 public:
     explicit Serial(int nSpeed = 115200, char nEvent = 'N', int nBits = 8, int nStop = 1);
     ~Serial();
-    void pack(uint8_t pose, uint8_t identify);
+    void pack(uint8_t pose, uint8_t identify, int dx);
     bool InitPort(int nSpeed = 115200, char  nEvent = 'N', int nBits = 8, int nStop = 1);
     bool WriteData();
     bool ReadData(struct ReceiveData& buffer);

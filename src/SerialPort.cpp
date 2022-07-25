@@ -70,16 +70,18 @@ bool Serial::InitPort(int nSpeed_, char nEvent_, int nBits_, int nStop_) {
 
 /**
  * @brief package the data needed by lower computer
- * @param yaw yaw angle
- * @param pitch pitch angle
+ * @param pose milk box pose
+ * @param identify detect flag
+ * @param dx pixel error
  * @return none
  */
-void Serial::pack(uint8_t pose, uint8_t identify)
+void Serial::pack(uint8_t pose, uint8_t identify, int dx)
 {
     unsigned char *p;
     buff[0] = VISION_SOF;
     memcpy(buff + 1, &pose, 1);
     memcpy(buff + 2, &identify, 1);
+    memcpy(buff + 3, &dx, 4);
     buff[SEND_LENGTH-1] = static_cast<char>(VISION_TOF);
 }
 
